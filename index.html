@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Physics Sandbox Concept</title>
+    <!-- Tailwind CSS for high fidelity UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth transitions & custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col md:flex-row overflow-hidden font-sans select-none">
+
+    <!-- Sidebar Control Panel -->
+    <aside class="w-full md:w-96 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col h-1/2 md:h-screen overflow-y-auto">
+        
+        <!-- Header -->
+        <div class="p-5 border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-10 flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
+                    <svg class="w-6 h-6 text-teal-400 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="animation: spin 8s linear infinite;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    PhysiX Lab
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">2D Physics Engine Concept Sandbox</p>
+            </div>
+            <span class="px-2 py-1 text-xs font-semibold text-teal-400 bg-teal-950/50 border border-teal-800 rounded-full animate-pulse">Live</span>
+        </div>
+
+        <!-- Scrollable settings and configurations -->
+        <div class="p-5 space-y-6 flex-1">
+
+            <!-- Preset Controls -->
+            <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    Simulation Presets
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="applyPreset('default')" class="preset-btn px-3 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-700 text-xs transition duration-150 text-left flex flex-col justify-between h-14">
+                        <span class="font-bold">Earth Gravity</span>
+                        <span class="text-[10px] text-slate-400">Standard sandbox</span>
+                    </button>
+                    <button onclick="applyPreset('zerog')" class="preset-btn px-3 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-700 text-xs transition duration-150 text-left flex flex-col justify-between h-14">
+                        <span class="font-bold">Space Orbit</span>
+                        <span class="text-[10px] text-slate-400">Centripetal gravity</span>
+                    </button>
+                    <button onclick="applyPreset('plinko')" class="preset-btn px-3 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-700 text-xs transition duration-150 text-left flex flex-col justify-between h-14">
+                        <span class="font-bold">Plinko Cascade</span>
+                        <span class="text-[10px] text-slate-400">Peg grid drop</span>
+                    </button>
+                    <button onclick="applyPreset('chaos')" class="preset-btn px-3 py-2 bg-slate-800 text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-700 text-xs transition duration-150 text-left flex flex-col justify-between h-14">
+                        <span class="font-bold">Chaos Room</span>
+                        <span class="text-[10px] text-slate-400">Zero drag, maximum bounce</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactivity Tools -->
+            <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                    Interactive Pointer Mode
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setTool('spawn')" id="tool-spawn" class="tool-btn flex items-center gap-2 px-3 py-2 border rounded-lg text-xs transition font-semibold">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Spawn Ball
+                    </button>
+                    <button onclick="setTool('shoot')" id="tool-shoot" class="tool-btn flex items-center gap-2 px-3 py-2 border rounded-lg text-xs transition font-semibold">
+                        <svg class="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg> Sling Shot
+                    </button>
+                    <button onclick="setTool('attract')" id="tool-attract" class="tool-btn flex items-center gap-2 px-3 py-2 border rounded-lg text-xs transition font-semibold">
+                        <svg class="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 11V9a2 2 0 00-2-2m2 4v.793c.026.009.051.02.076.032l2.4 1.2a1 1 0 001.017-.07l2.4-1.6a1 1 0 00.413-1.01l-1.2-4.8A1 1 0 0013.13 3H11V1m0 10V1m0 10v12"></path></svg> Gravity Pull
+                    </button>
+                    <button onclick="setTool('repel')" id="tool-repel" class="tool-btn flex items-center gap-2 px-3 py-2 border rounded-lg text-xs transition font-semibold">
+                        <svg class="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Gravity Push
+                    </button>
+                    <button onclick="setTool('shockwave')" id="tool-shockwave" class="tool-btn flex items-center gap-2 px-3 py-2 border rounded-lg text-xs transition font-semibold">
+                        💥 Explode
+                    </button>
+                    <button onclick="setTool('obstacle')" id="tool-obstacle" class="tool-btn flex items-center gap-2 px-3 py-2 border rounded-lg text-xs transition font-semibold">
+                        🛡️ Place Peg
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Forces / Environment Settings -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h1.5a3 3 0 003-3V6.7m-2 9l-3 3m0 0l-3-3m3 3V10"></path></svg>
+                    Environment Variables
+                </h3>
+
+                <!-- Gravity Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300">Vertical Gravity</span>
+                        <span id="gravity-val" class="font-mono text-teal-400">9.8 m/s²</span>
+                    </div>
+                    <input type="range" id="gravity-slider" min="-25" max="25" step="0.5" value="9.8" class="w-full accent-teal-400 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Wind Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300">Wind / Horizontal Force</span>
+                        <span id="wind-val" class="font-mono text-teal-400">0 m/s²</span>
+                    </div>
+                    <input type="range" id="wind-slider" min="-15" max="15" step="0.5" value="0" class="w-full accent-teal-400 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Air Resistance (Drag) Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300">Medium Friction (Air Drag)</span>
+                        <span id="drag-val" class="font-mono text-teal-400">0.01</span>
+                    </div>
+                    <input type="range" id="drag-slider" min="0" max="0.1" step="0.002" value="0.01" class="w-full accent-teal-400 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Particle Builder Configuration -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    New Ball Properties
+                </h3>
+
+                <!-- Bounciness (Restitution) Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300">Bounciness (Restitution)</span>
+                        <span id="bounce-val" class="font-mono text-teal-400">0.8</span>
+                    </div>
+                    <input type="range" id="bounce-slider" min="0" max="1.1" step="0.05" value="0.8" class="w-full accent-teal-400 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Ball Size Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300">Radius (Size)</span>
+                        <span id="size-val" class="font-mono text-teal-400">15 px</span>
+                    </div>
+                    <input type="range" id="size-slider" min="5" max="50" step="1" value="15" class="w-full accent-teal-400 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Toggle Options -->
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" id="collision-toggle" checked class="accent-teal-400 w-4 h-4 rounded">
+                        <span>Enable Ball-to-Ball Collisions</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" id="trail-toggle" class="accent-teal-400 w-4 h-4 rounded">
+                        <span>Enable Motion Trails</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Quick Action Commands -->
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+                <button onclick="clearAll()" class="w-full py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-900/50 rounded-lg text-xs font-semibold transition">
+                    🗑️ Clear Sandbox Particles
+                </button>
+                <button onclick="clearPegs()" class="w-full py-2 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold transition">
+                    🛡️ Clear Placed Obstacles/Pegs
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Footer Credits -->
+        <div class="p-4 border-t border-slate-800 text-center text-xs text-slate-500 bg-slate-950/20">
+            Powered by standard canvas and JS physics. Ready for Github hosting.
+        </div>
+    </aside>
+
+    <!-- Main Simulator Area -->
+    <main class="flex-1 flex flex-col relative h-1/2 md:h-screen">
+        
+        <!-- Live Stat Counters -->
+        <div class="absolute top-4 left-4 z-10 flex gap-2 flex-wrap pointer-events-none">
+            <div class="px-3 py-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg flex items-center gap-2 text-xs font-mono shadow-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>FPS: <span id="fps-stat" class="text-emerald-400">60</span></span>
+            </div>
+            <div class="px-3 py-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg flex items-center gap-2 text-xs font-mono shadow-lg">
+                <span>Balls: <span id="balls-stat" class="text-teal-400">0</span> / 150</span>
+            </div>
+            <div class="px-3 py-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg flex items-center gap-2 text-xs font-mono shadow-lg">
+                <span>Pegs: <span id="pegs-stat" class="text-purple-400">0</span></span>
+            </div>
+        </div>
+
+        <!-- Live Controls Overlaid on Canvas -->
+        <div class="absolute top-4 right-4 z-10 flex gap-2">
+            <!-- Play/Pause -->
+            <button id="play-pause-btn" onclick="togglePause()" class="px-4 py-2 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-lg hover:bg-slate-800 text-teal-400 transition">
+                <span id="play-pause-icon">⏸️</span> <span id="play-pause-text">Pause</span>
+            </button>
+            <!-- Step Frame -->
+            <button id="step-frame-btn" onclick="stepFrame()" class="px-4 py-2 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-lg hover:bg-slate-800 text-indigo-400 hidden transition">
+                <span>⏭️ Step Frame</span>
+            </button>
+            <!-- Shower of Balls -->
+            <button onclick="spawnShower()" class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-teal-500/20 transition">
+                🌧️ Shower Particle
+            </button>
+        </div>
+
+        <!-- Mouse mode/sling hint -->
+        <div id="action-hint" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 px-4 py-2 bg-slate-900/95 border border-slate-800 rounded-xl text-xs text-slate-400 flex items-center gap-2 shadow-2xl pointer-events-none transition duration-350 opacity-100">
+            <span class="text-teal-400 font-semibold uppercase text-[10px]">Tip:</span> Click inside canvas to spawn particles.
+        </div>
+
+        <!-- Render Target Canvas -->
+        <canvas id="sandbox-canvas" class="w-full h-full bg-slate-950 flex-1 block cursor-crosshair"></canvas>
+    </main>
+
+    <script>
+        // --- Core Simulation Engine Setup ---
+        const canvas = document.getElementById('sandbox-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Physics Constants & Settings
+        let GRAVITY_Y = 9.8; 
+        let GRAVITY_X = 0;   // representing Wind
+        let AIR_DRAG = 0.01;  // medium resistance
+        let GLOBAL_BOUNCE = 0.8; 
+        let BALL_SIZE = 15;
+        let COLLISION_ENABLED = true;
+        let TRAILS_ENABLED = false;
+        let ACTIVE_TOOL = 'spawn'; // spawn, shoot, attract, repel, shockwave, obstacle
+        let IS_PAUSED = false;
+
+        // Space gravity setting for Centripetal Orbits
+        let spaceOrbitMode = false;
+
+        // Arrays of Objects
+        let particles = [];
+        let pegs = []; // Static Obstacles (Circular)
+
+        // Mouse Tracker
+        const mouse = {
+            x: 0,
+            y: 0,
+            isDown: false,
+            startDragX: 0,
+            startDragY: 0
+        };
+
+        // Initialize and handle dynamic Canvas scaling
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Preset Configurations Builder
+        const presets = {
+            default: () => {
+                spaceOrbitMode = false;
+                GRAVITY_Y = 9.8;
+                GRAVITY_X = 0;
+                AIR_DRAG = 0.01;
+                GLOBAL_BOUNCE = 0.8;
+                document.getElementById('gravity-slider').value = 9.8;
+                document.getElementById('wind-slider').value = 0;
+                document.getElementById('drag-slider').value = 0.01;
+                document.getElementById('bounce-slider').value = 0.8;
+                pegs = [];
+                particles = [];
+                // Generate baseline floor structure (optional but clean sandbox look)
+                generateFloorObstacles();
+            },
+            zerog: () => {
+                spaceOrbitMode = true;
+                GRAVITY_Y = 0;
+                GRAVITY_X = 0;
+                AIR_DRAG = 0.0;
+                GLOBAL_BOUNCE = 0.95;
+                document.getElementById('gravity-slider').value = 0;
+                document.getElementById('wind-slider').value = 0;
+                document.getElementById('drag-slider').value = 0.0;
+                document.getElementById('bounce-slider').value = 0.95;
+                pegs = [];
+                particles = [];
+                // Add center sun/satellite gravitational points
+                pegs.push({ x: canvas.width / 2, y: canvas.height / 2, radius: 40, color: '#f59e0b', gravitationalPull: 120 });
+                // Add orbiting baseline
+                for(let i=0; i<30; i++){
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = 120 + Math.random() * 100;
+                    const speed = Math.sqrt(120 / r) * 12; // approximate orbital velocity
+                    particles.push({
+                        x: (canvas.width / 2) + Math.cos(angle) * r,
+                        y: (canvas.height / 2) + Math.sin(angle) * r,
+                        vx: -Math.sin(angle) * speed,
+                        vy: Math.cos(angle) * speed,
+                        radius: 5 + Math.random() * 8,
+                        mass: 5 + Math.random() * 8,
+                        bounciness: 0.9,
+                        color: `hsl(${200 + Math.random() * 60}, 90%, 60%)`,
+                        trail: []
+                    });
+                }
+            },
+            plinko: () => {
+                spaceOrbitMode = false;
+                GRAVITY_Y = 12;
+                GRAVITY_X = 0;
+                AIR_DRAG = 0.008;
+                GLOBAL_BOUNCE = 0.5;
+                document.getElementById('gravity-slider').value = 12;
+                document.getElementById('wind-slider').value = 0;
+                document.getElementById('drag-slider').value = 0.008;
+                document.getElementById('bounce-slider').value = 0.5;
+                pegs = [];
+                particles = [];
+                
+                // Construct a beautifully spaced Plinko board
+                const rows = 6;
+                const pegSpacing = canvas.width / 8;
+                const startY = 140;
+                
+                for (let r = 0; r < rows; r++) {
+                    const count = r % 2 === 0 ? 8 : 7;
+                    const offsetX = r % 2 === 0 ? 0 : pegSpacing / 2;
+                    for (let c = 0; c < count; c++) {
+                        pegs.push({
+                            x: offsetX + (c + 0.5) * pegSpacing,
+                            y: startY + (r * 60),
+                            radius: 12,
+                            color: '#c084fc',
+                            gravitationalPull: 0
+                        });
+                    }
+                }
+            },
+            chaos: () => {
+                spaceOrbitMode = false;
+                GRAVITY_Y = 0;
+                GRAVITY_X = 0;
+                AIR_DRAG = 0.00;
+                GLOBAL_BOUNCE = 1.02; // ultra hyper bounciness
+                document.getElementById('gravity-slider').value = 0;
+                document.getElementById('wind-slider').value = 0;
+                document.getElementById('drag-slider').value = 0;
+                document.getElementById('bounce-slider').value = 1.02;
+                pegs = [];
+                particles = [];
+                // Fill room with particles moving at randomized directions
+                for (let i = 0; i < 40; i++) {
+                    particles.push({
+                        x: Math.random() * (canvas.width - 60) + 30,
+                        y: Math.random() * (canvas.height - 60) + 30,
+                        vx: (Math.random() - 0.5) * 16,
+                        vy: (Math.random() - 0.5) * 16,
+                        radius: 10 + Math.random() * 10,
+                        mass: 15,
+                        bounciness: 1.02,
+                        color: `hsl(${Math.random() * 360}, 90%, 65%)`,
+                        trail: []
+                    });
+                }
+            }
+        };
+
+        function generateFloorObstacles() {
+            // Generates simple initial interactive targets
+            pegs.push({ x: canvas.width * 0.25, y: canvas.height * 0.65, radius: 25, color: '#6366f1', gravitationalPull: 0 });
+            pegs.push({ x: canvas.width * 0.75, y: canvas.height * 0.65, radius: 25, color: '#6366f1', gravitationalPull: 0 });
+            pegs.push({ x: canvas.width * 0.5, y: canvas.height * 0.45, radius: 35, color: '#a855f7', gravitationalPull: 0 });
+        }
+
+        function applyPreset(pKey) {
+            presets[pKey]();
+            syncSlidersUI();
+            updateStatsUI();
+            
+            // Visual highlight on preset selected
+            const btns = document.querySelectorAll('.preset-btn');
+            btns.forEach(b => b.classList.remove('border-teal-500', 'bg-slate-800/80'));
+            event?.currentTarget?.classList.add('border-teal-500', 'bg-slate-800/80');
+        }
+
+        // Keep HTML sliders accurate with JavaScript values
+        function syncSlidersUI() {
+            document.getElementById('gravity-val').innerText = `${GRAVITY_Y.toFixed(1)} m/s²`;
+            document.getElementById('wind-val').innerText = `${GRAVITY_X.toFixed(1)} m/s²`;
+            document.getElementById('drag-val').innerText = AIR_DRAG.toFixed(3);
+            document.getElementById('bounce-val').innerText = GLOBAL_BOUNCE.toFixed(2);
+            document.getElementById('size-val').innerText = `${BALL_SIZE} px`;
+        }
+
+        // Add Listeners to Range Sliders
+        document.getElementById('gravity-slider').addEventListener('input', (e) => {
+            GRAVITY_Y = parseFloat(e.target.value);
+            document.getElementById('gravity-val').innerText = `${GRAVITY_Y.toFixed(1)} m/s²`;
+        });
+        document.getElementById('wind-slider').addEventListener('input', (e) => {
+            GRAVITY_X = parseFloat(e.target.value);
+            document.getElementById('wind-val').innerText = `${GRAVITY_X.toFixed(1)} m/s²`;
+        });
+        document.getElementById('drag-slider').addEventListener('input', (e) => {
+            AIR_DRAG = parseFloat(e.target.value);
+            document.getElementById('drag-val').innerText = AIR_DRAG.toFixed(3);
+        });
+        document.getElementById('bounce-slider').addEventListener('input', (e) => {
+            GLOBAL_BOUNCE = parseFloat(e.target.value);
+            document.getElementById('bounce-val').innerText = GLOBAL_BOUNCE.toFixed(2);
+        });
+        document.getElementById('size-slider').addEventListener('input', (e) => {
+            BALL_SIZE = parseInt(e.target.value);
+            document.getElementById('size-val').innerText = `${BALL_SIZE} px`;
+        });
+        document.getElementById('collision-toggle').addEventListener('change', (e) => {
+            COLLISION_ENABLED = e.target.checked;
+        });
+        document.getElementById('trail-toggle').addEventListener('change', (e) => {
+            TRAILS_ENABLED = e.target.checked;
+            if(!TRAILS_ENABLED) {
+                // Wipe existing trails instantly
+                particles.forEach(p => p.trail = []);
+            }
+        });
+
+        // Tool Switching Setup
+        const toolHints = {
+            spawn: 'Left click inside canvas to spawn particles dynamically.',
+            shoot: 'Left click, hold, drag, and release to aim & sling shot particles.',
+            attract: 'Press & hold Left Click anywhere inside the grid to attract particles.',
+            repel: 'Press & hold Left Click to push particles away via vector deflection.',
+            shockwave: 'Click to trigger an impact crater explosion.',
+            obstacle: 'Click to drop custom physical pegs inside the simulation.'
+        };
+
+        function setTool(toolKey) {
+            ACTIVE_TOOL = toolKey;
+            
+            // Adjust UI Highlights
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.className = "tool-btn flex items-center gap-2 px-3 py-2 border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-100 hover:bg-slate-800 text-xs rounded-lg transition font-semibold";
+            });
+            
+            const activeBtn = document.getElementById(`tool-${toolKey}`);
+            if(activeBtn) {
+                activeBtn.className = "tool-btn flex items-center gap-2 px-3 py-2 border border-teal-500/50 bg-teal-950/40 text-teal-300 text-xs rounded-lg transition font-bold";
+            }
+
+            document.getElementById('action-hint').innerHTML = `
+                <span class="text-teal-400 font-semibold uppercase text-[10px]">Active Mode:</span> ${toolHints[toolKey]}
+            `;
+        }
+
+        // Particle Builder Object Spawner
+        function createParticle(x, y, vx = 0, vy = 0) {
+            if(particles.length >= 150) {
+                // Keep performance optimal in canvas iframe environments
+                particles.shift(); 
+            }
+            
+            // Dynamic color selection with sleek theme palettes
+            const colors = ['#2dd4bf', '#38bdf8', '#818cf8', '#a78bfa', '#f472b6', '#fb7185'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            particles.push({
+                x: x,
+                y: y,
+                vx: vx,
+                vy: vy,
+                radius: BALL_SIZE,
+                mass: BALL_SIZE, // Mass proportional to radius/size ratio
+                bounciness: GLOBAL_BOUNCE,
+                color: randomColor,
+                trail: []
+            });
+            updateStatsUI();
+        }
+
+        // Helper Shower spawner
+        function spawnShower() {
+            const count = 12;
+            for(let i=0; i<count; i++) {
+                setTimeout(() => {
+                    const spawnX = Math.random() * canvas.width;
+                    createParticle(spawnX, 40, (Math.random() - 0.5) * 6, Math.random() * 3);
+                }, i * 150);
+            }
+        }
+
+        function clearAll() {
+            particles = [];
+            updateStatsUI();
+        }
+
+        function clearPegs() {
+            pegs = [];
+            updateStatsUI();
+        }
+
+        function updateStatsUI() {
+            document.getElementById('balls-stat').innerText = particles.length;
+            document.getElementById('pegs-stat').innerText = pegs.length;
+        }
+
+        // Play Pause System
+        function togglePause() {
+            IS_PAUSED = !IS_PAUSED;
+            const btnIcon = document.getElementById('play-pause-icon');
+            const btnText = document.getElementById('play-pause-text');
+            const stepBtn = document.getElementById('step-frame-btn');
+
+            if(IS_PAUSED) {
+                btnIcon.innerText = "▶️";
+                btnText.innerText = "Resume";
+                stepBtn.classList.remove('hidden');
+            } else {
+                btnIcon.innerText = "⏸️";
+                btnText.innerText = "Pause";
+                stepBtn.classList.add('hidden');
+            }
+        }
+
+        let doSingleStep = false;
+        function stepFrame() {
+            doSingleStep = true;
+        }
+
+        // --- Handle Interactive Mouse Actions ---
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.clientX - rect.left) * (canvas.width / rect.width),
+                y: (evt.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(canvas, e);
+            mouse.x = pos.x;
+            mouse.y = pos.y;
+            mouse.isDown = true;
+            
+            mouse.startDragX = pos.x;
+            mouse.startDragY = pos.y;
+
+            if (ACTIVE_TOOL === 'spawn') {
+                createParticle(pos.x, pos.y);
+            } else if (ACTIVE_TOOL === 'shockwave') {
+                triggerExplosion(pos.x, pos.y);
+            } else if (ACTIVE_TOOL === 'obstacle') {
+                pegs.push({ x: pos.x, y: pos.y, radius: 15 + Math.random() * 15, color: '#c084fc', gravitationalPull: 0 });
+                updateStatsUI();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(canvas, e);
+            mouse.x = pos.x;
+            mouse.y = pos.y;
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!mouse.isDown) return;
+            mouse.isDown = false;
+            
+            if (ACTIVE_TOOL === 'shoot') {
+                // Sling Shot Release Force Physics
+                const dx = mouse.startDragX - mouse.x;
+                const dy = mouse.startDragY - mouse.y;
+                // Scale factor for nice projection speeds
+                const speedScale = 0.15; 
+                createParticle(mouse.startDragX, mouse.startDragY, dx * speedScale, dy * speedScale);
+            }
+        });
+
+        // Touch Interaction Support for Mobile Viewers
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const tx = (touch.clientX - rect.left) * (canvas.width / rect.width);
+                const ty = (touch.clientY - rect.top) * (canvas.height / rect.height);
+                
+                mouse.x = tx;
+                mouse.y = ty;
+                mouse.isDown = true;
+                mouse.startDragX = tx;
+                mouse.startDragY = ty;
+
+                if (ACTIVE_TOOL === 'spawn') {
+                    createParticle(tx, ty);
+                } else if (ACTIVE_TOOL === 'shockwave') {
+                    triggerExplosion(tx, ty);
+                } else if (ACTIVE_TOOL === 'obstacle') {
+                    pegs.push({ x: tx, y: ty, radius: 20, color: '#c084fc', gravitationalPull: 0 });
+                    updateStatsUI();
+                }
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+                mouse.y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            if (ACTIVE_TOOL === 'shoot' && mouse.isDown) {
+                const dx = mouse.startDragX - mouse.x;
+                const dy = mouse.startDragY - mouse.y;
+                const speedScale = 0.15;
+                createParticle(mouse.startDragX, mouse.startDragY, dx * speedScale, dy * speedScale);
+            }
+            mouse.isDown = false;
+        });
+
+
+        // --- Core Physics Engine Calculations ---
+
+        // Shockwave/Explosion calculation logic
+        function triggerExplosion(ex, ey) {
+            const forceStrength = 180;
+            const radius = 220;
+
+            particles.forEach(p => {
+                const dx = p.x - ex;
+                const dy = p.y - ey;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if(distance < radius) {
+                    const factor = (radius - distance) / radius; // inverse scaling
+                    const angle = Math.atan2(dy, dx);
+                    p.vx += Math.cos(angle) * factor * forceStrength / (p.mass * 0.1);
+                    p.vy += Math.sin(angle) * factor * forceStrength / (p.mass * 0.1);
+                }
+            });
+
+            // Trigger canvas flash and shock ring overlay in draw step
+            activeExplosions.push({ x: ex, y: ey, progress: 0, maxRadius: radius });
+        }
+
+        let activeExplosions = [];
+
+        function updatePhysics() {
+            // Mouse gravity pull or push
+            if (mouse.isDown) {
+                if (ACTIVE_TOOL === 'attract') {
+                    particles.forEach(p => {
+                        const dx = mouse.x - p.x;
+                        const dy = mouse.y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        if (dist < 400) {
+                            const strength = (400 - dist) / 400;
+                            p.vx += (dx / dist) * strength * 0.7;
+                            p.vy += (dy / dist) * strength * 0.7;
+                        }
+                    });
+                } else if (ACTIVE_TOOL === 'repel') {
+                    particles.forEach(p => {
+                        const dx = p.x - mouse.x;
+                        const dy = p.y - mouse.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        if (dist < 250) {
+                            const strength = (250 - dist) / 250;
+                            p.vx += (dx / dist) * strength * 1.2;
+                            p.vy += (dy / dist) * strength * 1.2;
+                        }
+                    });
+                }
+            }
+
+            // Central / Celestial orbit simulation
+            if (spaceOrbitMode) {
+                pegs.forEach(peg => {
+                    if (peg.gravitationalPull > 0) {
+                        particles.forEach(p => {
+                            const dx = peg.x - p.x;
+                            const dy = peg.y - p.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                            const force = (peg.gravitationalPull * p.mass) / (dist * dist + 100); // Softened gravity
+                            p.vx += (dx / dist) * force;
+                            p.vy += (dy / dist) * force;
+                        });
+                    }
+                });
+            }
+
+            // Loop and calculate motions
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+
+                // Apply forces
+                if (!spaceOrbitMode) {
+                    p.vy += GRAVITY_Y * 0.16; // scaled delta force
+                    p.vx += GRAVITY_X * 0.16;
+                }
+
+                // Medium linear drag damping (Friction / Air resistance)
+                p.vx *= (1 - AIR_DRAG);
+                p.vy *= (1 - AIR_DRAG);
+
+                // Update Position coords
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Motion Trail handling
+                if(TRAILS_ENABLED) {
+                    p.trail.push({ x: p.x, y: p.y });
+                    if(p.trail.length > 8) p.trail.shift();
+                }
+
+                // Boundary collision handling
+                const frictionCoeff = 0.98; // ground roll friction
+                
+                // Floor Collision
+                if (p.y + p.radius > canvas.height) {
+                    p.y = canvas.height - p.radius;
+                    p.vy = -p.vy * p.bounciness;
+                    p.vx *= frictionCoeff;
+                }
+                // Ceiling Collision
+                if (p.y - p.radius < 0) {
+                    p.y = p.radius;
+                    p.vy = -p.vy * p.bounciness;
+                }
+                // Right Wall Collision
+                if (p.x + p.radius > canvas.width) {
+                    p.x = canvas.width - p.radius;
+                    p.vx = -p.vx * p.bounciness;
+                }
+                // Left Wall Collision
+                if (p.x - p.radius < 0) {
+                    p.x = p.radius;
+                    p.vx = -p.vx * p.bounciness;
+                }
+
+                // Collision checks with static circular Pegs
+                pegs.forEach(peg => {
+                    const dx = p.x - peg.x;
+                    const dy = p.y - peg.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDist = p.radius + peg.radius;
+
+                    if (distance < minDist) {
+                        // Project collision vector & clear overlap
+                        const normalX = dx / (distance || 1);
+                        const normalY = dy / (distance || 1);
+                        const overlap = minDist - distance;
+
+                        // Repel dynamic ball out of peg static mass
+                        p.x += normalX * overlap;
+                        p.y += normalY * overlap;
+
+                        // Calculate bouncing response vectors
+                        const dotVelocity = p.vx * normalX + p.vy * normalY;
+                        if (dotVelocity < 0) {
+                            p.vx -= (1 + p.bounciness) * dotVelocity * normalX;
+                            p.vy -= (1 + p.bounciness) * dotVelocity * normalY;
+                        }
+                    }
+                });
+            }
+
+            // Handle Dynamic Ball-on-Ball collisions (O(N^2) optimized for sandbox count limits)
+            if (COLLISION_ENABLED) {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p1 = particles[i];
+                        const p2 = particles[j];
+
+                        const dx = p2.x - p1.x;
+                        const dy = p2.y - p1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const minDist = p1.radius + p2.radius;
+
+                        if (dist < minDist) {
+                            // Elastic bounce and resolve overlapping coordinates
+                            const normalX = dx / (dist || 1);
+                            const normalY = dy / (dist || 1);
+                            const overlap = minDist - dist;
+
+                            // Displace objects proportionally to static weight/mass
+                            const m1Ratio = p2.mass / (p1.mass + p2.mass);
+                            const m2Ratio = p1.mass / (p1.mass + p2.mass);
+
+                            p1.x -= normalX * overlap * m1Ratio;
+                            p1.y -= normalY * overlap * m1Ratio;
+                            p2.x += normalX * overlap * m2Ratio;
+                            p2.y += normalY * overlap * m2Ratio;
+
+                            // Calculate elastic momentum collision vectors
+                            const kx = p1.vx - p2.vx;
+                            const ky = p1.vy - p2.vy;
+                            const relativeVelocityNormal = kx * normalX + ky * normalY;
+
+                            if (relativeVelocityNormal > 0) { // moving toward each other
+                                const commonBounciness = Math.min(p1.bounciness, p2.bounciness);
+                                const impulse = (1 + commonBounciness) * relativeVelocityNormal / ((1 / p1.mass) + (1 / p2.mass));
+
+                                p1.vx -= (impulse / p1.mass) * normalX;
+                                p1.vy -= (impulse / p1.mass) * normalY;
+                                p2.vx += (impulse / p2.mass) * normalX;
+                                p2.vy += (impulse / p2.mass) * normalY;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Render and Animation Pipelines ---
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+        let currentFps = 60;
+
+        function draw(timestamp) {
+            // Calculate Performance Frames Per Second (FPS)
+            if (!lastFpsUpdate) lastFpsUpdate = timestamp;
+            frameCount++;
+            if (timestamp - lastFpsUpdate >= 1000) {
+                currentFps = Math.round((frameCount * 1000) / (timestamp - lastFpsUpdate));
+                document.getElementById('fps-stat').innerText = currentFps;
+                frameCount = 0;
+                lastFpsUpdate = timestamp;
+            }
+
+            // Run Physics Engine computations
+            if (!IS_PAUSED) {
+                updatePhysics();
+            } else if (doSingleStep) {
+                updatePhysics();
+                doSingleStep = false;
+            }
+
+            // Render Phase
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw a subtle physics blueprint graph grid
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Render Static Obstacles / Pegs
+            pegs.forEach(peg => {
+                ctx.beginPath();
+                ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+                ctx.fillStyle = peg.color;
+                ctx.fill();
+                // Outer structural ring
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Centripetal solar system orbit aura
+                if (peg.gravitationalPull > 0) {
+                    ctx.beginPath();
+                    ctx.arc(peg.x, peg.y, peg.radius + 20, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.1)';
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]); // Reset dash state
+                }
+            });
+
+            // Render Particles
+            particles.forEach(p => {
+                // Motion trail render
+                if (TRAILS_ENABLED && p.trail.length > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.trail[0].x, p.trail[0].y);
+                    for (let step = 1; step < p.trail.length; step++) {
+                        ctx.lineTo(p.trail[step].x, p.trail[step].y);
+                    }
+                    ctx.strokeStyle = `${p.color}33`; // alpha path
+                    ctx.lineWidth = p.radius * 0.8;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+
+                // Render Main Ball Body
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+
+                // Sleek light source sheen effect overlay (adds visual depth)
+                ctx.beginPath();
+                ctx.arc(p.x - p.radius * 0.3, p.y - p.radius * 0.3, p.radius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.fill();
+            });
+
+            // Render sling vector trace overlay
+            if (mouse.isDown && ACTIVE_TOOL === 'shoot') {
+                ctx.beginPath();
+                ctx.moveTo(mouse.startDragX, mouse.startDragY);
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.strokeStyle = '#2dd4bf';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]); // clear dash
+
+                // Starting node indicator
+                ctx.beginPath();
+                ctx.arc(mouse.startDragX, mouse.startDragY, BALL_SIZE, 0, Math.PI * 2);
+                ctx.strokeStyle = '#2dd4bf';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // Draw Attract/Repel Range Indicator rings (on drag)
+            if (mouse.isDown && (ACTIVE_TOOL === 'attract' || ACTIVE_TOOL === 'repel')) {
+                const drawRadius = ACTIVE_TOOL === 'attract' ? 250 : 150;
+                ctx.beginPath();
+                ctx.arc(mouse.x, mouse.y, drawRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = ACTIVE_TOOL === 'attract' ? 'rgba(45, 212, 191, 0.2)' : 'rgba(244, 63, 94, 0.2)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Draw Explosions
+            activeExplosions.forEach((exp, idx) => {
+                exp.progress += 0.05;
+                const currentRadius = exp.maxRadius * exp.progress;
+                ctx.beginPath();
+                ctx.arc(exp.x, exp.y, currentRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(251, 113, 133, ${1 - exp.progress})`;
+                ctx.lineWidth = 6 * (1 - exp.progress);
+                ctx.stroke();
+
+                if (exp.progress >= 1) {
+                    activeExplosions.splice(idx, 1);
+                }
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        // Run application on start
+        window.onload = function() {
+            presets.default();
+            setTool('spawn');
+            requestAnimationFrame(draw);
+        };
+    </script>
+</body>
+</html>
